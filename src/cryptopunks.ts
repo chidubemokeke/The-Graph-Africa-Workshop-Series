@@ -2,10 +2,21 @@
 import { BigInt, Bytes } from "@graphprotocol/graph-ts";
 
 // Import the event types that the Graph node will listen to from the smart contract.
-import { Assign, PunkTransfer } from "../generated/Cryptopunks/Cryptopunks";
+import {
+  Assign,
+  PunkBought,
+  PunkTransfer,
+} from "../generated/Cryptopunks/Cryptopunks";
 
 // Import the schema definitions that we've defined for our subgraph.
-import { Collector, DigitalArt, ArtTransfer } from "../generated/schema";
+import {
+  ArtPurchase,
+  ArtTransfer,
+  Collector,
+  DigitalArt,
+  PremiumCollector,
+  PurchasedDigitalArt,
+} from "../generated/schema";
 
 // Function to handle 'Assign' events emitted by the contract.
 export function handleAssign(event: Assign): void {
@@ -75,4 +86,50 @@ export function handlePunkTransfer(event: PunkTransfer): void {
   // Update the digital art's owner to the new owner and save the changes.
   digitalArt.owner = newCollector.id;
   digitalArt.save();
+}
+
+export function handlePunkBought(event: PunkBought): void {
+  /**
+   * event PunkBought(
+   *  uint indexed punkIndex, uint value,
+   *  address indexed fromAddress, address indexed toAddress
+   * );
+   */
+  // let's define PremiumCollector entity
+  const premiumCollectorId = event.params.toAddress.toHexString();
+
+  let premiumCollector = PremiumCollector.load(premiumCollectorId);
+
+  if (!premiumCollector) {
+    premiumCollector = new PremiumCollector(premiumCollectorId);
+    premiumCollector.whoAreYou = event.params.toAddress;
+    premiumCollector.save();
+  }
+
+  // let's define PurchasedDigitalArt entity
+  const purchasedDigitalArtId = event.params.punkIndex.toString();
+
+  let purchasedDigitalArt = PurchasedDigitalArt.load(purchasedDigitalArtId);
+
+  if (!purchasedDigitalArt) {
+    purchasedDigitalArt = new PurchasedDigitalArt(purchasedDigitalArtId);
+    purchasedDigitalArt.tokenId = BigInt.fromString(purchasedDigitalArtId);
+    purchasedDigitalArt.owner = premiumCollectorId;
+    purchasedDigitalArt.save();
+  }
+
+  // let's define ArtPurchase entity
+  const artPurchaseId = event.transaction.hash.toHexString();
+
+  let artPurchase = ArtPurchase.load(artPurchaseId);
+
+  if (!artPurchase) {
+    artPurchase = new ArtPurchase(artPurchaseId);
+    artPurchase.art = purchasedDigitalArtId;
+    artPurchase.oldOwner = event.params.fromAddress;
+    artPurchase.newOwner = event.params.toAddress;
+    artPurchase.price = event.params.value;
+    artPurchase.timestamp = event.block.timestamp;
+    artPurchase.save();
+  }
 }
