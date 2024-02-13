@@ -7,6 +7,15 @@ type Collector @entity {
   collection: [DigitalArt!]! @derivedFrom(field: "owner")
 }
 
+type PremiumCollector @entity {
+  # Unique identifier for a PremiumCollector, wallet address in this case
+  id: ID!
+  # wallet address
+  whoAreYou: Bytes!
+  # The collection of digital art purchased by the PremiumCollector
+  purchasedCollection: [PurchasedDigitalArt!]! @derivedFrom(field: "owner")
+}
+
 type DigitalArt @entity {
   # Unique identifier for a piece of digital art, typically the token ID.
   id: ID!
@@ -16,6 +25,17 @@ type DigitalArt @entity {
   owner: Collector!
   # The history of transfers for this piece of digital art.
   history: [ArtTransfer!]! @derivedFrom(field: "art") # The history of transfers for this piece of digital art.
+}
+
+type PurchasedDigitalArt @entity {
+  # Unique identifier for PurchasedDigitalArt, token ID is this case
+  id: ID!
+  # Punk Index i.e token ID
+  tokenId: BigInt!
+  # The current owner of this digital art piece
+  owner: PremiumCollector!
+  # The history of purchases for this piece of digital art
+  history: [ArtPurchase!]! @derivedFrom(field: "art")
 }
 
 type ArtTransfer @entity {
@@ -28,5 +48,20 @@ type ArtTransfer @entity {
   # The recipient collector.
   newOwner: Bytes!
   # The timestamp when the transfer occurred.
+  timestamp: BigInt!
+}
+
+type ArtPurchase @entity {
+  # Unique identifier for an ArtPurchase event, tx hash is used in this case
+  id: ID!
+  # The piece of digital art that was purchased
+  art: PurchasedDigitalArt!
+  # The collector selling the art
+  oldOwner: Bytes!
+  # The premium collector buying the art
+  newOwner: Bytes!
+  # The amount paid to purchase art
+  price: BigInt!
+  # The timestamp when the transfer occurred
   timestamp: BigInt!
 }
