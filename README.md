@@ -16,6 +16,7 @@ It is good practice to understand how your data is structured and linked. Always
 
 ### Table of Content
 
+- [Descripition](#description)
 - [Pre-requisities & Software Requirements](#pre-requisities--software-requirements)
 - [Let's Build 🚀](#lets-build-🚀)
   - [A bit about CryptoPunks](#a-bit-about-cryptopunks)
